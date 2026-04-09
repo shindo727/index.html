@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sharm Rides – Transfer Booking</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0f2030;
+    --sand: #c9a96e;
+    --coral: #e8714a;
+    --ivory: #fdf6ee;
+    --muted: #8a9baa;
+    --card: #162840;
+    --border: rgba(201,169,110,0.2);
+    --selected-bg: linear-gradient(135deg, #c9a96e, #e8714a);
+    --radius: 14px;
+    --transition: 0.22s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  body {
+    background: var(--navy);
+    color: var(--ivory);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Subtle background texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(201,169,110,0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 40% at 80% 100%, rgba(232,113,74,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 0 60px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    text-align: center;
+    padding: 36px 24px 0;
+  }
+
+  .logo-wrap {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .logo-icon {
+    width: 52px;
+    height: 52px;
+    background: var(--selected-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 8px rgba(201,169,110,0.12), 0 8px 24px rgba(232,113,74,0.3);
+    margin-bottom: 4px;
+  }
+
+  .logo-icon svg { width:26px; height:26px; fill:#fff; }
+
+  .logo-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #fdf6ee 40%, #c9a96e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .logo-tagline {
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--sand);
+    font-weight: 500;
+    margin-top: -2px;
+  }
+
+  /* ── CAR IMAGE ── */
+  .car-section {
+    position: relative;
+    margin: 28px 0 0;
+    height: 210px;
+    overflow: hidden;
+  }
+
+  .car-glow {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 50px;
+    background: radial-gradient(ellipse, rgba(201,169,110,0.25) 0%, transparent 70%);
+    filter: blur(12px);
+  }
+
+  .car-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 60%;
+    display: block;
+  }
+
+  .car-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(160deg, #162840 0%, #0f2030 100%);
+  }
+
+  .car-fallback svg { width:200px; opacity:0.85; }
+
+  /* ── BADGE ── */
+  .vehicle-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: rgba(201,169,110,0.1);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .vehicle-badge span {
+    font-size: 12px;
+    color: var(--sand);
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .vehicle-badge .dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--coral);
+    letter-spacing: 0;
+  }
+
+  /* ── BOOKING CARD ── */
+  .booking-card {
+    margin: 20px 16px 0;
+    background: var(--card);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+
+  /* ── SECTION ── */
+  .section {
+    padding: 22px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section:last-child { border-bottom: none; }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  /* ── BUTTON GROUP ── */
+  .btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .opt-btn {
+    width: 100%;
+    padding: 15px 20px;
+    background: rgba(255,255,255,0.04);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius);
+    color: var(--ivory);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: all var(--transition);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .opt-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--selected-bg);
+    opacity: 0;
+    transition: opacity var(--transition);
+  }
+
+  .opt-btn .btn-text { position: relative; z-index: 1; }
+
+  .opt-btn .check {
+    position: relative;
+    z-index: 1;
+    margin-left: auto;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all var(--transition);
+  }
+
+  .opt-btn .check svg {
+    width: 11px;
+    height: 11px;
+    opacity: 0;
+    transition: opacity var(--transition);
+    fill: white;
+  }
+
+  .opt-btn:hover:not(.selected) {
+    border-color: rgba(201,169,110,0.4);
+    background: rgba(201,169,110,0.06);
+    transform: translateX(3px);
+  }
+
+  .opt-btn.selected {
+    border-color: transparent;
+    color: #fff;
+    transform: translateX(3px);
+    box-shadow: 0 6px 20px rgba(232,113,74,0.3);
+  }
+
+  .opt-btn.selected::before { opacity: 1; }
+
+  .opt-btn.selected .check {
+    border-color: rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.2);
+  }
+
+  .opt-btn.selected .check svg { opacity: 1; }
+
+  /* ── PRICE SECTION ── */
+  .price-section {
+    margin: 20px 16px 0;
+    padding: 22px 24px;
+    background: var(--card);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+
+  .price-left {}
+
+  .price-label {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .price-amount {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--sand);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .price-sub {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .price-badge {
+    background: linear-gradient(135deg, rgba(201,169,110,0.15), rgba(232,113,74,0.15));
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    text-align: center;
+  }
+
+  .price-badge .pb-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .price-badge .pb-val { font-size: 13px; font-weight: 600; color: var(--sand); margin-top: 2px; }
+
+  /* ── CTA ── */
+  .cta-wrap {
+    margin: 20px 16px 0;
+  }
+
+  .cta-btn {
+    width: 100%;
+    padding: 18px;
+    background: var(--selected-bg);
+    border: none;
+    border-radius: 16px;
+    color: #fff;
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: all var(--transition);
+    box-shadow: 0 8px 30px rgba(232,113,74,0.4), 0 2px 8px rgba(0,0,0,0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+    opacity: 0;
+    transition: opacity var(--transition);
+  }
+
+  .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(232,113,74,0.5); }
+  .cta-btn:hover::after { opacity: 1; }
+  .cta-btn:active { transform: translateY(0); }
+
+  .cta-hint {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 10px;
+  }
+
+  /* ── MODAL OVERLAY ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(8,18,30,0.85);
+    backdrop-filter: blur(6px);
+    z-index: 100;
+    display: flex;
+    align-items: flex-end;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    background: #162840;
+    border-radius: 24px 24px 0 0;
+    border-top: 1px solid var(--border);
+    padding: 0 0 40px;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+
+  .modal-overlay.open .modal {
+    transform: translateY(0);
+  }
+
+  .modal-handle {
+    width: 40px;
+    height: 4px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 2px;
+    margin: 14px auto 0;
+  }
+
+  .modal-header {
+    padding: 20px 24px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ivory);
+  }
+
+  .modal-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: var(--ivory);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition);
+  }
+
+  .modal-close:hover { background: rgba(255,255,255,0.15); }
+
+  /* ── ROUTE PILL ── */
+  .route-pill {
+    margin: 18px 24px 0;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, rgba(201,169,110,0.12), rgba(232,113,74,0.12));
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .route-pill .rp-label {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    flex-basis: 100%;
+    margin-bottom: 4px;
+  }
+
+  .route-pill .rp-from,
+  .route-pill .rp-to {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--ivory);
+  }
+
+  .route-pill .rp-arrow {
+    color: var(--coral);
+    font-size: 14px;
+    flex-grow: 1;
+    text-align: center;
+  }
+
+  .route-pill .rp-time {
+    background: rgba(201,169,110,0.2);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--sand);
+    margin-left: auto;
+  }
+
+  /* ── FORM ── */
+  .form-body {
+    padding: 18px 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .field-label {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .field-input {
+    width: 100%;
+    padding: 14px 16px;
+    background: rgba(255,255,255,0.05);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius);
+    color: var(--ivory);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    transition: border-color var(--transition), background var(--transition);
+    outline: none;
+    -webkit-appearance: none;
+  }
+
+  .field-input::placeholder { color: rgba(255,255,255,0.25); }
+
+  .field-input:focus {
+    border-color: var(--sand);
+    background: rgba(201,169,110,0.06);
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 17px;
+    margin-top: 6px;
+    background: var(--selected-bg);
+    border: none;
+    border-radius: 14px;
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 6px 24px rgba(232,113,74,0.35);
+    transition: all var(--transition);
+  }
+
+  .submit-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(232,113,74,0.45); }
+  .submit-btn svg { width:18px; height:18px; fill:white; flex-shrink:0; }
+
+  /* ── SUCCESS ── */
+  .success-screen {
+    display: none;
+    padding: 36px 24px 20px;
+    text-align: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .success-screen.show { display: flex; }
+
+  .success-icon {
+    width: 70px;
+    height: 70px;
+    background: var(--selected-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 12px rgba(201,169,110,0.12);
+    margin-bottom: 8px;
+  }
+
+  .success-icon svg { width:34px; height:34px; fill:white; }
+
+  .success-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--ivory);
+  }
+
+  .success-sub { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+  .success-detail {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    width: 100%;
+    text-align: left;
+    margin-top: 8px;
+  }
+
+  .sd-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .sd-row:last-child { margin-bottom: 0; }
+  .sd-key { font-size: 12px; color: var(--muted); }
+  .sd-val { font-size: 13px; font-weight: 600; color: var(--ivory); text-align: right; }
+
+  .whatsapp-btn {
+    width: 100%;
+    padding: 16px;
+    background: #25D366;
+    border: none;
+    border-radius: 14px;
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 6px 20px rgba(37,211,102,0.3);
+    transition: all var(--transition);
+    text-decoration: none;
+    margin-top: 8px;
+  }
+
+  .whatsapp-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 28px rgba(37,211,102,0.4); }
+  .whatsapp-btn svg { width:22px; height:22px; fill:white; }
+
+  /* ── VALIDATION ── */
+  .error-msg {
+    display: none;
+    margin: 12px 16px 0;
+    padding: 12px 16px;
+    background: rgba(232,113,74,0.12);
+    border: 1px solid rgba(232,113,74,0.3);
+    border-radius: 10px;
+    font-size: 13px;
+    color: #ffb09a;
+    text-align: center;
+  }
+
+  .error-msg.show { display: block; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(16px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  .header        { animation: fadeUp 0.5s ease both; }
+  .car-section   { animation: fadeUp 0.5s 0.1s ease both; }
+  .vehicle-badge { animation: fadeUp 0.5s 0.15s ease both; }
+  .booking-card  { animation: fadeUp 0.5s 0.2s ease both; }
+  .price-section { animation: fadeUp 0.5s 0.25s ease both; }
+  .cta-wrap      { animation: fadeUp 0.5s 0.3s ease both; }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- LOGO -->
+  <header class="header">
+    <div class="logo-wrap">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+        </svg>
+      </div>
+      <div class="logo-name">Sharm Rides</div>
+      <div class="logo-tagline">Sharm El Sheikh · Private Transfers</div>
+    </div>
+  </header>
+
+  <!-- CAR IMAGE -->
+  <div class="car-section">
+    <img
+      class="car-img"
+      src="https://images.unsplash.com/photo-1619767886558-efdc259cde1a?w=900&q=80"
+      alt="Toyota Hiace 2026"
+      onerror="this.style.display='none'; document.getElementById('car-fallback').style.display='flex';"
+    />
+    <div class="car-fallback" id="car-fallback" style="display:none;">
+      <svg viewBox="0 0 260 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="20" y="50" width="220" height="55" rx="10" fill="#1e3a52"/>
+        <rect x="40" y="25" width="160" height="40" rx="8" fill="#1a3248"/>
+        <rect x="50" y="30" width="65" height="28" rx="4" fill="#0d2035" opacity=".8"/>
+        <rect x="125" y="30" width="65" height="28" rx="4" fill="#0d2035" opacity=".8"/>
+        <circle cx="65" cy="108" r="18" fill="#0d2035" stroke="#c9a96e" stroke-width="3"/>
+        <circle cx="65" cy="108" r="9" fill="#1a3248"/>
+        <circle cx="195" cy="108" r="18" fill="#0d2035" stroke="#c9a96e" stroke-width="3"/>
+        <circle cx="195" cy="108" r="9" fill="#1a3248"/>
+        <rect x="22" y="68" width="18" height="12" rx="3" fill="#c9a96e" opacity=".9"/>
+        <rect x="220" y="68" width="18" height="12" rx="3" fill="#e8714a" opacity=".9"/>
+        <text x="130" y="78" font-family="sans-serif" font-size="9" fill="#8a9baa" text-anchor="middle">Toyota Hiace 2026</text>
+      </svg>
+    </div>
+    <div class="car-glow"></div>
+  </div>
+
+  <div class="vehicle-badge">
+    <span>Toyota Hiace 2026</span>
+    <span class="dot"></span>
+    <span>Up to 10 Passengers</span>
+    <span class="dot"></span>
+    <span>A/C</span>
+  </div>
+
+  <!-- BOOKING CARD -->
+  <div class="booking-card">
+
+    <!-- FROM -->
+    <div class="section">
+      <div class="section-title">From</div>
+      <div class="btn-group" id="from-group">
+        <button class="opt-btn" data-group="from" data-value="Naama Bay">
+          <span class="btn-text">Naama Bay</span>
+          <span class="check"><svg viewBox="0 0 12 10"><polyline points="1,5 4.5,8.5 11,1.5" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </button>
+        <button class="opt-btn" data-group="from" data-value="Nabq">
+          <span class="btn-text">Nabq</span>
+          <span class="check"><svg viewBox="0 0 12 10"><polyline points="1,5 4.5,8.5 11,1.5" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </button>
+        <button class="opt-btn" data-group="from" data-value="Hadaba">
+          <span class="btn-text">Hadaba</span>
+          <span class="check"><svg viewBox="0 0 12 10"><polyline points="1,5 4.5,8.5 11,1.5" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- TO -->
+    <div class="section">
+      <div class="section-title">To</div>
+      <div class="btn-group" id="to-group">
+        <button class="opt-btn" data-group="to" data-value="SOHO Square">
+          <span class="btn-text">SOHO Square</span>
+          <span class="check"><svg viewBox="0 0 12 10"><polyline points="1,5 4.5,8.5 11,1.5" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </button>
+        <button class="opt-btn" data-group="to" data-value="Old Market">
+          <span class="btn-text">Old Market</span>
+          <span class="check"><svg viewBox="0 0 12 10"><polyline points="1,5 4.5,8.5 11,1.5" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </button>
+        <button class="opt-btn" data-group="to" data-value="Naama Promenade">
+          <span class="btn-text">Naama Promenade</span>
+          <span class="check"><svg viewBox="0 0 12 10"><polyline points="1,5 4.5,8.5 11,1.5" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- TIME -->
+    <div class="section">
+      <div class="section-title">Time</div>
+      <div class="btn-group" id="time-group">
+        <button class="opt-btn" data-group="time" data-value="8:00 PM">
+          <span class="btn-text">🕗 &nbsp;8:00 PM</span>
+          <span class="check"><svg viewBox="0 0 12 10"><polyline points="1,5 4.5,8.5 11,1.5" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ERROR -->
+  <div class="error-msg" id="error-msg">Please select From, To, and Time before booking.</div>
+
+  <!-- PRICE -->
+  <div class="price-section">
+    <div class="price-left">
+      <div class="price-label">Fixed Price</div>
+      <div class="price-amount">$14</div>
+      <div class="price-sub">Round Trip · Per Vehicle</div>
+    </div>
+    <div class="price-badge">
+      <div class="pb-label">Payment</div>
+      <div class="pb-val">Pay on Arrival</div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-wrap">
+    <button class="cta-btn" id="book-btn">Book Now</button>
+    <div class="cta-hint">Free cancellation · No prepayment required</div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Confirm Booking</div>
+      <button class="modal-close" id="modal-close">✕</button>
+    </div>
+
+    <!-- Route display -->
+    <div class="route-pill" id="route-pill">
+      <div class="rp-label">Your Route</div>
+      <span class="rp-from" id="rp-from">–</span>
+      <span class="rp-arrow">→</span>
+      <span class="rp-to" id="rp-to">–</span>
+      <span class="rp-time" id="rp-time">–</span>
+    </div>
+
+    <!-- Booking form -->
+    <div class="form-body" id="form-body">
+      <div class="field-group">
+        <div class="field-label">Your Name</div>
+        <input class="field-input" id="f-name" type="text" placeholder="e.g. John Smith" autocomplete="name">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Hotel Name</div>
+        <input class="field-input" id="f-hotel" type="text" placeholder="e.g. Rixos Premium Seagate" autocomplete="off">
+      </div>
+      <div class="field-group">
+        <div class="field-label">Room Number</div>
+        <input class="field-input" id="f-room" type="text" placeholder="e.g. 214" inputmode="numeric">
+      </div>
+      <button class="submit-btn" id="submit-btn">
+        <svg viewBox="0 0 24 24"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>
+        Confirm via WhatsApp
+      </button>
+    </div>
+
+    <!-- Success -->
+    <div class="success-screen" id="success-screen">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+      </div>
+      <div class="success-title">You're All Set!</div>
+      <div class="success-sub">Your booking details are ready.<br>We'll confirm via WhatsApp shortly.</div>
+      <div class="success-detail">
+        <div class="sd-row"><span class="sd-key">Name</span><span class="sd-val" id="sd-name">–</span></div>
+        <div class="sd-row"><span class="sd-key">Hotel</span><span class="sd-val" id="sd-hotel">–</span></div>
+        <div class="sd-row"><span class="sd-key">Room</span><span class="sd-val" id="sd-room">–</span></div>
+        <div class="sd-row"><span class="sd-key">Route</span><span class="sd-val" id="sd-route">–</span></div>
+        <div class="sd-row"><span class="sd-key">Time</span><span class="sd-val" id="sd-time">–</span></div>
+        <div class="sd-row"><span class="sd-key">Price</span><span class="sd-val">$14 – Pay on Arrival</span></div>
+      </div>
+      <a id="whatsapp-link" class="whatsapp-btn" href="#" target="_blank">
+        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+        Send via WhatsApp
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── STATE ──
+  const state = { from: null, to: null, time: null };
+
+  // ── SELECTION LOGIC ──
+  document.querySelectorAll('.opt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const group = btn.dataset.group;
+      const value = btn.dataset.value;
+
+      // Deselect siblings
+      document.querySelectorAll(`.opt-btn[data-group="${group}"]`).forEach(b => b.classList.remove('selected'));
+
+      // Select this
+      btn.classList.add('selected');
+      state[group] = value;
+
+      // Clear error if now valid
+      if (state.from && state.to && state.time) {
+        document.getElementById('error-msg').classList.remove('show');
+      }
+    });
+  });
+
+  // ── BOOK NOW ──
+  document.getElementById('book-btn').addEventListener('click', () => {
+    if (!state.from || !state.to || !state.time) {
+      document.getElementById('error-msg').classList.add('show');
+      document.getElementById('error-msg').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    openModal();
+  });
+
+  function openModal() {
+    // Populate route
+    document.getElementById('rp-from').textContent = state.from;
+    document.getElementById('rp-to').textContent   = state.to;
+    document.getElementById('rp-time').textContent  = state.time;
+
+    // Reset form view
+    document.getElementById('form-body').style.display    = 'flex';
+    document.getElementById('success-screen').classList.remove('show');
+    document.getElementById('modal-title').textContent    = 'Confirm Booking';
+    document.getElementById('f-name').value  = '';
+    document.getElementById('f-hotel').value = '';
+    document.getElementById('f-room').value  = '';
+
+    document.getElementById('modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+  });
+
+  // ── SUBMIT ──
+  document.getElementById('submit-btn').addEventListener('click', () => {
+    const name  = document.getElementById('f-name').value.trim();
+    const hotel = document.getElementById('f-hotel').value.trim();
+    const room  = document.getElementById('f-room').value.trim();
+
+    if (!name || !hotel || !room) {
+      // Shake empty fields
+      ['f-name','f-hotel','f-room'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el.value.trim()) {
+          el.style.borderColor = '#e8714a';
+          el.focus();
+          setTimeout(() => el.style.borderColor = '', 1500);
+        }
+      });
+      return;
+    }
+
+    // Populate success
+    document.getElementById('sd-name').textContent  = name;
+    document.getElementById('sd-hotel').textContent = hotel;
+    document.getElementById('sd-room').textContent  = room;
+    document.getElementById('sd-route').textContent = `${state.from} → ${state.to}`;
+    document.getElementById('sd-time').textContent  = state.time;
+
+    // WhatsApp message
+    const msg = encodeURIComponent(
+      `🚗 *New Booking – Sharm Rides*\n\n` +
+      `👤 Name: ${name}\n` +
+      `🏨 Hotel: ${hotel}\n` +
+      `🚪 Room: ${room}\n\n` +
+      `📍 From: ${state.from}\n` +
+      `📍 To: ${state.to}\n` +
+      `🕗 Time: ${state.time}\n\n` +
+      `💵 Price: $14 Round Trip – Pay on Arrival\n\n` +
+      `_Sent via Sharm Rides booking page_`
+    );
+    document.getElementById('whatsapp-link').href = `https://wa.me/201000000000?text=${msg}`;
+
+    // Show success
+    document.getElementById('form-body').style.display = 'none';
+    document.getElementById('success-screen').classList.add('show');
+    document.getElementById('modal-title').textContent = 'Booking Ready ✓';
+  });
+</script>
+</body>
+</html>
